@@ -1,0 +1,18 @@
+GEM
+  remote: https://gem.coop/
+  specs:
+    bindata (3.0.1)
+
+PLATFORMS
+  ruby
+  x86_64-linux
+
+DEPENDENCIES
+  bindata
+
+CHECKSUMS
+  bindata (3.0.1) sha256=e97a826a12f6e7c5847e983e5826f277d61035317d352ec339b079537f2fa466
+  bundler (4.1.0.beta1) sha256=8a2dac8ca276ff4eff5efc2c6457b0044080fc1e431534ad7c5cc6187232b800
+
+BUNDLED WITH
+  4.1.0.beta1
