@@ -76,14 +76,23 @@ class MiniDump < BinData::Record
     uint16 :os_suite_mask
     uint16 :_reserved
 
-    struct :cpu_info do
-      uint32 :vendor_id
+    struct :x86_cpu_info do
+      uint32 :_unknown_vendor_id_a
       uint32 :_unknown_vendor_id_b
       uint32 :_unknown_vendor_id_c
       uint32 :version_information
       uint32 :feature_information
       uint32 :amd_extended_cpu_features
     end
+
+    string :_wine_magic, read_length: 4
+    uint32 :_wine_field_count, onlyif: -> { _wine_magic == "WINE" }
+    uint32 :_wine_field_a_len, onlyif: -> { _wine_magic == "WINE" }
+    uint32 :_wine_field_b_len, onlyif: -> { _wine_magic == "WINE" }
+    uint32 :_wine_field_c_len, onlyif: -> { _wine_magic == "WINE" }
+    stringz :wine_build_id, onlyif: -> { _wine_magic == "WINE" }
+    stringz :wine_system, onlyif: -> { _wine_magic == "WINE" }
+    stringz :wine_release, onlyif: -> { _wine_magic == "WINE" }
   end
 
   # https://learn.microsoft.com/en-us/windows/win32/api/minidumpapiset/ns-minidumpapiset-minidump_misc_info_2
@@ -114,33 +123,34 @@ end
 
 # file = "/home/cyberarm/Documents/W3D Hub/games/ar-release/debug/crashdump.20260129-003917-r13285-n1.dmp"
 # file = "/home/cyberarm/Downloads/crashdump.20261001-150617-r13830-n1.dmp"
-file = "/home/cyberarm/Downloads/crashdump.20261002-202438-r13779-n1-lim.dmp"
+# file = "/home/cyberarm/Downloads/crashdump.20261002-202438-r13779-n1-lim.dmp"
 # file = "/home/cyberarm/Downloads/crashdump.20261002-202438-r13779-n1-ext.dmp"
+file = "/home/cyberarm/Downloads/crashdump.20261005-203639-r4294967295-n1.dmp"
 File.open(file, "rb") do |f|
   mini = MiniDump::Header.read(f)
-  pp mini
+  pp [mini.class, mini]
 
   stream = mini.streams.find { |stream| stream[:stream_type] == 7 }
   if stream
     f.pos = stream.location.offset
-    stream = MiniDump::SystemInfo.read(f.read(stream.location.data_size))
-    # pp [stream.class, stream]
+    stream = MiniDump::SystemInfo.read(f)
+    pp [stream.class, stream]
   end
 
   misc = mini.streams.find { |stream| stream[:stream_type] == 15 }
   if misc
     f.pos = misc.location.offset
-    misc = MiniDump::MiscInfo.read(f.read(misc.location.data_size))
-    # pp [misc.class, misc]
+    misc = MiniDump::MiscInfo.read(f)
+    pp [misc.class, misc]
   end
 
   stream = mini.streams.find { |stream| stream[:stream_type] == 6 }
   if stream
     f.pos = stream.location.offset
     pp [f.pos, stream.location.data_size, f.size]
-    stream = MiniDump::ExceptionStream.read(f.read(stream.location.data_size))
-    # pp [stream.class, stream]
+    stream = MiniDump::ExceptionStream.read(f)
+    pp [stream.class, stream]
   end
   # pp mini
-  # pp Time.at(mini.timestamp)
+  pp Time.at(mini.timestamp)
 end
